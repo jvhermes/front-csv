@@ -83,6 +83,13 @@ const decimalFields = [
   "vve",
 ];
 
+function removeBOM(text: string): string {
+  if (text.charCodeAt(0) === 0xFEFF) {
+    return text.slice(1);
+  }
+  return text;
+}
+
 
 async function transformCSV(file: File, setLogs: React.Dispatch<React.SetStateAction<string[]>>): Promise<string | null> {
   return new Promise((resolve, reject) => {
@@ -92,12 +99,14 @@ async function transformCSV(file: File, setLogs: React.Dispatch<React.SetStateAc
     setLogs((prevLogs) => [...prevLogs, "Iniciando leitura do arquivo CSV..."]);
 
     reader.onload = (event) => {
-      const text = event.target?.result as string;
-
+      let text = event.target?.result as string;
+      text = removeBOM(text);
 
       Papa.parse(text, {
         header: true,
         delimiter: ";",
+        skipEmptyLines: true,
+        encoding: "UTF-8",
         complete: function (results: Papa.ParseResult<any>) {
 
           setLogs((prevLogs) => [...prevLogs, "Parsing do CSV concluído. Iniciando transformação..."]);
@@ -127,7 +136,9 @@ async function transformCSV(file: File, setLogs: React.Dispatch<React.SetStateAc
           });
 
 
-          const csv = Papa.unparse(transformedData, { delimiter: ";" });
+          const cleanedData = transformedData.filter(row => Object.values(row).some(value => value.trim() !== ''));
+          const csv = Papa.unparse(cleanedData, { delimiter: ";" });
+
           setLogs((prevLogs) => [...prevLogs, "Transformação concluída. CSV pronto para download."]);
           resolve(csv);
         },
@@ -143,7 +154,7 @@ async function transformCSV(file: File, setLogs: React.Dispatch<React.SetStateAc
       reject("Erro ao ler o arquivo.");
     };
 
-    reader.readAsText(file);
+    reader.readAsText(file, 'UTF-8');
   });
 }
 export default function Home() {
