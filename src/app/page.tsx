@@ -124,7 +124,7 @@ async function transformCSV(file: File, setLogs: React.Dispatch<React.SetStateAc
 
               // Limitar campos decimais a duas casas decimais
               if (decimalFields.includes(field)) {
-                const [integerPart, decimalPart] = processedValue.split(".");
+                const [integerPart, decimalPart] = processedValue.split(",");
                 if (decimalPart && decimalPart.length > 2) {
                   processedValue = `${integerPart}.${decimalPart.slice(0, 2)}`;
                 }
